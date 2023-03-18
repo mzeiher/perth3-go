@@ -58,6 +58,9 @@ func (a *asciiFile) GetNextTideGrid() (*grid.TideGridData, error) {
 		LongitudeMin: header.longitudeMin,
 		LongitudeMax: header.longitudeMax,
 
+		SizeX: header.gridX,
+		SizeY: header.gridY,
+
 		UndefValue: header.undefValue,
 		Data:       make([][]float64, header.gridY),
 	}
