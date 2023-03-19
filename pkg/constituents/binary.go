@@ -3,6 +3,8 @@ package constituents
 import (
 	"encoding/binary"
 	"os"
+
+	"github.com/mzeiher/perth3-go/pkg/utils"
 )
 
 const HEADER_SIZE_BYTES = 40
@@ -157,19 +159,8 @@ func InterpolateConstituentsAtPositionAndReturnHeight(file *os.File, lat float64
 }
 
 func mapLon(lon float64) float64 {
-	return mapValue(lon, MIN_LON, MAX_LON, 0, float64(GRID_SIZE_X)-1)
+	return utils.MapValue(lon, MIN_LON, MAX_LON, 0, float64(GRID_SIZE_X)-1)
 }
 func mapLat(lat float64) float64 {
-	return mapValue(lat, MIN_LAT, MAX_LAT, 0, float64(GRID_SIZE_Y)-1)
-}
-
-func mapValue(value float64, fromMin float64, fromMax float64, toMin float64, toMax float64) float64 {
-	// Calculate the range of values for both the source and target ranges
-	fromRange := fromMax - fromMin
-	toRange := toMax - toMin
-
-	// Map the value from the source range to the target range
-	mappedValue := (value-fromMin)*(toRange/fromRange) + toMin
-
-	return mappedValue
+	return utils.MapValue(lat, MIN_LAT, MAX_LAT, 0, float64(GRID_SIZE_Y)-1)
 }
