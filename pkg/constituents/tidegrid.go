@@ -1,4 +1,13 @@
-package grid
+package constituents
+
+const GRID_SIZE_Y uint32 = 2881
+const GRID_SIZE_X uint32 = 5761
+
+const MIN_LAT float64 = -90.0
+const MAX_LAT float64 = 90.0
+
+const MIN_LON float64 = -180.0
+const MAX_LON float64 = 180.0
 
 type TideConstituent string
 
@@ -26,7 +35,7 @@ const (
 	AMPLITUDE TideValueType = "AMPLITUDE"
 )
 
-type TideGridData struct {
+type TideConstituentData struct {
 	Constituent  TideConstituent
 	Type         TideValueType
 	SizeX        int

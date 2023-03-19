@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mzeiher/perth3-go/pkg/grid"
+	"github.com/mzeiher/perth3-go/pkg/constituents"
 )
 
 type asciiFile struct {
@@ -21,8 +21,8 @@ type asciiHeader struct {
 	latitudeMin  float64
 	latitudeMax  float64
 
-	constituentType grid.TideValueType
-	constituent     grid.TideConstituent
+	constituentType constituents.TideValueType
+	constituent     constituents.TideConstituent
 
 	undefValue     float64
 	entriesPerLine int
@@ -43,14 +43,14 @@ func CreateNewAsciiLoader(path string) (TideDataLoader, error) {
 	}, nil
 }
 
-func (a *asciiFile) GetNextTideGrid() (*grid.TideGridData, error) {
+func (a *asciiFile) GetNextTideGrid() (*constituents.TideConstituentData, error) {
 
 	header, err := a.ParseHeader()
 	if err != nil {
 		return nil, err
 	}
 
-	gridData := &grid.TideGridData{
+	gridData := &constituents.TideConstituentData{
 		Constituent:  header.constituent,
 		Type:         header.constituentType,
 		LatitudeMin:  header.latitudeMin,
@@ -119,7 +119,7 @@ func (a *asciiFile) ParseHeader() (asciiHeader, error) {
 	}
 
 	constituentFound := false
-	for _, currentConstituent := range grid.TideConstituents {
+	for _, currentConstituent := range constituents.TideConstituents {
 		if strings.HasPrefix(title, string(currentConstituent)) {
 			constituentFound = true
 			asciHeader.constituent = currentConstituent
@@ -131,9 +131,9 @@ func (a *asciiFile) ParseHeader() (asciiHeader, error) {
 	}
 
 	if strings.Contains(strings.ToLower(title), "amplitude") {
-		asciHeader.constituentType = grid.AMPLITUDE
+		asciHeader.constituentType = constituents.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(title), "phase") {
-		asciHeader.constituentType = grid.PHASE
+		asciHeader.constituentType = constituents.PHASE
 	}
 
 	// try to get type in second line
@@ -142,9 +142,9 @@ func (a *asciiFile) ParseHeader() (asciiHeader, error) {
 		return asciHeader, err
 	}
 	if strings.Contains(strings.ToLower(description), "amplitude") {
-		asciHeader.constituentType = grid.AMPLITUDE
+		asciHeader.constituentType = constituents.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(description), "phase") {
-		asciHeader.constituentType = grid.PHASE
+		asciHeader.constituentType = constituents.PHASE
 	}
 	if asciHeader.constituentType == "" {
 		return asciHeader, fmt.Errorf("constituent type not found")

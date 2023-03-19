@@ -1,4 +1,4 @@
-package grid
+package constituents
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 // hcos = amplitude * cos(phase * (pi/180))
 // hsin = amplitude * sin(phase * (pi/180))
 // outputs array[longitude][latitude][0 = hcos, 1 = hsin]
-func CalculateHCosHSinFromAmplitudeAndPhase(amplitude *TideGridData, phase *TideGridData) ([][][]float64, error) {
+func CalculateHCosHSinFromAmplitudeAndPhase(amplitude *TideConstituentData, phase *TideConstituentData) ([][][]float64, error) {
 	if amplitude.Constituent != phase.Constituent {
 		return nil, fmt.Errorf("constituent does not match got %s expected %s", phase.Constituent, amplitude.Constituent)
 	}
