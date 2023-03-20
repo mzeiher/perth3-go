@@ -52,12 +52,12 @@ import (
 // +---------------------------------------+
 func main() {
 	// reader, err := loader.CreateNewAsciiLoader("./.data/tide/tidal_constituents.dat")
-	reader, err := loader.CreateNewAsciiLoader("./.data/tide/fort.30")
+	reader, err := loader.CreateNewAsciiTideLoader("./.data/tide/fort.30")
 	if err != nil {
 		panic(err)
 	}
 
-	file, err := os.OpenFile("./constituents.dat", os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile("./.data/tide/constituents.dat", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		panic(err)
 	}

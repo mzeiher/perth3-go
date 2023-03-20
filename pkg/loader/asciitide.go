@@ -10,12 +10,12 @@ import (
 	"github.com/mzeiher/perth3-go/pkg/constituents"
 )
 
-type asciiFile struct {
+type asciiTideFile struct {
 	TideDataLoader
 	reader *bufio.Reader
 }
 
-type asciiHeader struct {
+type asciiTideHeader struct {
 	longitudeMin float64
 	longitudeMax float64
 	latitudeMin  float64
@@ -31,19 +31,19 @@ type asciiHeader struct {
 	gridY int
 }
 
-func CreateNewAsciiLoader(path string) (TideDataLoader, error) {
+func CreateNewAsciiTideLoader(path string) (TideDataLoader, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	reader := bufio.NewReader(file)
 
-	return &asciiFile{
+	return &asciiTideFile{
 		reader: reader,
 	}, nil
 }
 
-func (a *asciiFile) GetNextTideGrid() (*constituents.TideConstituentData, error) {
+func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, error) {
 
 	header, err := a.ParseHeader()
 	if err != nil {
@@ -109,8 +109,8 @@ func (a *asciiFile) GetNextTideGrid() (*constituents.TideConstituentData, error)
 
 }
 
-func (a *asciiFile) ParseHeader() (asciiHeader, error) {
-	asciHeader := asciiHeader{}
+func (a *asciiTideFile) ParseHeader() (asciiTideHeader, error) {
+	asciHeader := asciiTideHeader{}
 
 	// try to read the title
 	title, err := a.reader.ReadString('\n')
