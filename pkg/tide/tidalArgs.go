@@ -4,14 +4,17 @@ import (
 	"time"
 
 	"github.com/mzeiher/perth3-go/pkg/astro"
+	"github.com/mzeiher/perth3-go/pkg/datetime"
 )
 
 // return arg[0..27]
 func DetermineEquilibriumTidalArguments(utcTime time.Time) []float64 {
 
-	hour := utcTime.Hour()
-	t1 := float64(15 * hour)
-	t2 := float64(30 * hour)
+	// hour := utcTime.Hour()
+	mjd := datetime.UTCTimeToMJD(utcTime)
+	julHour := float64(mjd-float64(int(mjd))) * 24
+	t1 := float64(15 * julHour)
+	t2 := float64(30 * julHour)
 
 	shpn := astro.Compute5BasicAstronomicalMeanLongitudesInDegree(utcTime)
 

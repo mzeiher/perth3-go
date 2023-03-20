@@ -114,8 +114,8 @@ func InterpolateConstituentsAtPositionAndReturnHeight(file *os.File, lat float64
 	xResInDegree := (MAX_LON - MIN_LON) / float64(GRID_SIZE_X-1)
 	yResInDegree := (MAX_LAT - MIN_LAT) / float64(GRID_SIZE_Y-1)
 
-	x0PosForLon := mapLon(lon) + 1
-	y0PosForLat := mapLat(lat) + 1
+	x0PosForLon := mapLon(lon)
+	y0PosForLat := mapLat(lat)
 
 	x0PosForLonInt := int(x0PosForLon)
 	y0PosForLatInt := int(y0PosForLat)
@@ -126,9 +126,9 @@ func InterpolateConstituentsAtPositionAndReturnHeight(file *os.File, lat float64
 	}
 	y1PosForLatInt := y0PosForLatInt + 1
 
-	weightWest := (xResInDegree - (lon - float64((x0PosForLonInt-1))*xResInDegree - MIN_LON)) / xResInDegree
+	weightWest := (xResInDegree - (lon - float64((x0PosForLonInt))*xResInDegree - MIN_LON)) / xResInDegree
 	weightEast := 1 - weightWest
-	weightSouth := (yResInDegree - (lat - float64((y0PosForLatInt-1))*yResInDegree - MIN_LAT)) / yResInDegree
+	weightSouth := (yResInDegree - (lat - float64((y0PosForLatInt))*yResInDegree - MIN_LAT)) / yResInDegree
 	weightNorth := 1 - weightSouth
 
 	weightNW := weightNorth * weightWest
@@ -136,9 +136,9 @@ func InterpolateConstituentsAtPositionAndReturnHeight(file *os.File, lat float64
 	weightSE := weightSouth * weightEast
 	weightSW := weightSouth * weightWest
 
-	combinedWeight := weightNE + weightNE + weightSE + weightSW
+	combinedWeight := weightNE + weightNW + weightSE + weightSW
 
-	constituentsNW := GetConstituentsForPosition(file, y1PosForLatInt, x1PosForLonInt)
+	constituentsNW := GetConstituentsForPosition(file, y1PosForLatInt, x0PosForLonInt)
 	constituentsNE := GetConstituentsForPosition(file, y1PosForLatInt, x1PosForLonInt)
 	constituentsSE := GetConstituentsForPosition(file, y0PosForLatInt, x1PosForLonInt)
 	constituentsSW := GetConstituentsForPosition(file, y0PosForLatInt, x0PosForLonInt)

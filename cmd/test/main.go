@@ -7,16 +7,17 @@ import (
 	"time"
 
 	"github.com/mzeiher/perth3-go/pkg/constituents"
+	"github.com/mzeiher/perth3-go/pkg/datetime"
 	"github.com/mzeiher/perth3-go/pkg/tide"
-	"github.com/mzeiher/perth3-go/pkg/utils"
 )
 
 func main() {
 
-	// year, month, day, hour, min, sec := 2023, time.March, 19, 14, 0, 0
-	year, month, day, hour, min, sec := 1985, time.January, 1, 0, 0, 0
+	year, month, day, hour, min, sec := 2023, time.March, 20, 10, 0, 0
+	// year, month, day, hour, min, sec := 1985, time.January, 1, 0, 0, 0
 	t := time.Date(year, month, day, hour, min, sec, 0, time.UTC)
 
+	// brest
 	var lat float64 = 48.389999
 	var lon float64 = -4.49
 
@@ -25,11 +26,10 @@ func main() {
 		panic(err)
 	}
 	defer file.Close()
-	for i := 0; i <= 300; i++ {
-		computedHeights := constituents.InterpolateConstituentsAtPositionAndReturnHeight(file, lat, lon)
-		heightsArgument := tide.MapComputedHeightsToHeightArray(computedHeights)
-		inferredHeights := tide.InferMinorTideHeights(heightsArgument)
-
+	computedHeights := constituents.InterpolateConstituentsAtPositionAndReturnHeight(file, lat, lon)
+	heightsArgument := tide.MapComputedHeightsToHeightArray(computedHeights)
+	inferredHeights := tide.InferMinorTideHeights(heightsArgument)
+	for i := 0; i <= 500; i++ {
 		arguments := tide.DetermineEquilibriumTidalArguments(t)
 		nodalCorrectionsF, nodalCorrectionsU := tide.DetermineNodalCorrections(t)
 
@@ -43,8 +43,7 @@ func main() {
 		}
 
 		lpeqomt := tide.CalculateLongPeriodEquilibriumOceanMeanTide(t, lat)
-		curve := fmt.Sprintf("%*s", int(utils.MapValue(sum+lpeqomt, -400, 400, 0, 20)), "*")
-		fmt.Printf("[%s]: tide: %9.4f lpeqomt: %9.4f, sum: %9.4f |%s\n", t.Format(time.RFC3339), sum/100, lpeqomt/100, (sum+lpeqomt)/100, curve)
+		fmt.Printf("[%s] [%10.8f] tide: %9.4f lpeqomt: %9.4f, sum: %9.4f\n", t.Format(time.RFC3339), datetime.UTCTimeToMJD(t)-46066, sum/100, lpeqomt/100, (sum+lpeqomt)/100)
 		t = t.Add(time.Minute * 15)
 	}
 

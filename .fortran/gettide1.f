@@ -1135,6 +1135,9 @@ c..declare
       REAL       LATMIN,LATMAX,LONMIN,LONMAX
       DIMENSION  GRID(ND1,ND2,*), VAL(*)
       LOGICAL    ISDATA,WRAP
+
+      ! REAL VALARR(2,10), GRIDARR(ND1, ND2, 2, 10)
+
       ISDATA = .TRUE.
       DX = (LONMAX - LONMIN)/REAL(NX - 1)
       DY = (LATMAX - LATMIN)/REAL(NY - 1)
@@ -1197,21 +1200,25 @@ c..declare
       IF (GRID(ILON1,JLAT1,1).NE.UNDEF) THEN
          W = W4
          DO 20 I=1,NGRIDS
+         grdata = GRID(ILON1,JLAT1,I)
  20      VAL(I) = W4*GRID(ILON1,JLAT1,I)
       ENDIF
       IF (GRID(ILON1,JLAT2,1).NE.UNDEF) THEN
          W = W + W1
          DO 30 I=1,NGRIDS
+         grdata = GRID(ILON1,JLAT2,I)
  30      VAL(I) = VAL(I) + W1*GRID(ILON1,JLAT2,I)
       ENDIF
       IF (GRID(ILON2,JLAT2,1).NE.UNDEF) THEN
          W = W + W2
          DO 40 I=1,NGRIDS
+         grdata = GRID(ILON2,JLAT2,I)   
  40      VAL(I) = VAL(I) + W2*GRID(ILON2,JLAT2,I)
       ENDIF
       IF (GRID(ILON2,JLAT1,1).NE.UNDEF) THEN
          W = W + W3
          DO 50 I=1,NGRIDS
+         grdata = GRID(ILON2,JLAT1,I)
  50      VAL(I) = VAL(I) + W3*GRID(ILON2,JLAT1,I)
       ENDIF
       IF (W.GT.0.5) THEN
