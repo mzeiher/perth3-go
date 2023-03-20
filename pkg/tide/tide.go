@@ -21,12 +21,12 @@ func GetLatAndHatAtLocation(constituentsFile string, lat float64, lon float64) (
 	}
 
 	for {
-		tideHeight := GetTideHeightFromInferredHeightForLocationAndTime(currentTime, inferredHeights, lat, lon)
+		tideHeight := GetTideHeightFromCalculatedHeightArrayForLocationAndTime(currentTime, inferredHeights, lat, lon)
 
 		tide_hat = math.Max(tide_hat, tideHeight)
 		tide_lat = math.Min(tide_lat, tideHeight)
 
-		currentTime = currentTime.Add(15 * time.Minute)
+		currentTime = currentTime.Add(60 * time.Minute)
 		if timeEnd.Sub(currentTime) <= 0 {
 			break
 		}
@@ -50,7 +50,7 @@ func GetTideHeightsAtLocationForTimeSpan(constituentsFile string, startTimeUtc t
 		if endTimeUtc.Sub(currentTime) <= 0 {
 			break
 		}
-		tideHeight := GetTideHeightFromInferredHeightForLocationAndTime(currentTime, inferredHeights, lat, lon)
+		tideHeight := GetTideHeightFromCalculatedHeightArrayForLocationAndTime(currentTime, inferredHeights, lat, lon)
 		data[idx] = tideHeight
 
 		idx++
@@ -60,14 +60,14 @@ func GetTideHeightsAtLocationForTimeSpan(constituentsFile string, startTimeUtc t
 	return data, nil
 }
 
-func GetTideHeightsAtLocationAtTime(constituentsFile string, timeUtc time.Time, lat float64, lon float64) (float64, error) {
+func GetTideHeightAtLocationAtTime(constituentsFile string, timeUtc time.Time, lat float64, lon float64) (float64, error) {
 
 	inferredHeights, err := GetCalculatedTideHeightsArrayAtLocation(constituentsFile, lat, lon)
 	if err != nil {
 		return 0, err
 	}
 
-	return GetTideHeightFromInferredHeightForLocationAndTime(timeUtc, inferredHeights, lat, lon), nil
+	return GetTideHeightFromCalculatedHeightArrayForLocationAndTime(timeUtc, inferredHeights, lat, lon), nil
 }
 
 func GetCalculatedTideHeightsArrayAtLocation(constituentFile string, lat float64, lon float64) ([][]float64, error) {
@@ -83,7 +83,7 @@ func GetCalculatedTideHeightsArrayAtLocation(constituentFile string, lat float64
 	return inferredHeights, nil
 }
 
-func GetTideHeightFromInferredHeightForLocationAndTime(timeUtc time.Time, inferredHeights [][]float64, lat float64, lon float64) float64 {
+func GetTideHeightFromCalculatedHeightArrayForLocationAndTime(timeUtc time.Time, inferredHeights [][]float64, lat float64, lon float64) float64 {
 
 	arguments := DetermineEquilibriumTidalArguments(timeUtc)
 	nodalCorrectionsF, nodalCorrectionsU := DetermineNodalCorrections(timeUtc)
