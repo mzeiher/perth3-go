@@ -1,6 +1,7 @@
 package tide
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"time"
@@ -62,12 +63,18 @@ func GetTideHeightsAtLocationForTimeSpan(constituentsFile string, startTimeUtc t
 
 func GetTideHeightAtLocationAtTime(constituentsFile string, timeUtc time.Time, lat float64, lon float64) (float64, error) {
 
+	start := time.Now()
 	inferredHeights, err := GetCalculatedTideHeightsArrayAtLocation(constituentsFile, lat, lon)
 	if err != nil {
 		return 0, err
 	}
+	fmt.Printf("lookup for tides took %s\n", time.Since(start))
 
-	return GetTideHeightFromCalculatedHeightArrayForLocationAndTime(timeUtc, inferredHeights, lat, lon), nil
+	start = time.Now()
+	height := GetTideHeightFromCalculatedHeightArrayForLocationAndTime(timeUtc, inferredHeights, lat, lon)
+	fmt.Printf("calculation for tides took %s\n", time.Since(start))
+
+	return height, nil
 }
 
 func GetCalculatedTideHeightsArrayAtLocation(constituentFile string, lat float64, lon float64) ([][]float64, error) {
