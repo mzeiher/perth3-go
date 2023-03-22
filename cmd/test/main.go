@@ -16,8 +16,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	displayLocale, err := time.LoadLocation("Australia/NSW")
-	// displayLocale, err := time.LoadLocation("Local")
+	// displayLocale, err := time.LoadLocation("Australia/NSW")
+	displayLocale, err := time.LoadLocation("Local")
 	if err != nil {
 		panic(err)
 	}
@@ -36,8 +36,8 @@ func main() {
 	// var lon float64 = -1.25
 
 	// // byron bay
-	var lat float64 = -28.629794
-	var lon float64 = 153.618673
+	// var lat float64 = -28.629794
+	// var lon float64 = 153.618673
 
 	// // lagos, PT
 	// var lat float64 = 37.098181
@@ -58,6 +58,10 @@ func main() {
 	// freiburg, germany :)
 	// var lat float64 = 48.014915
 	// var lon float64 = 7.850038
+
+	// den helder, nl
+	var lat float64 = 52.967
+	var lon float64 = 4.75
 
 	mssLoader, err := loader.CreateNewAsciiMSSLoader("./.data/meanseasurface/DTU15MSS_2min.mss")
 	if err != nil {
