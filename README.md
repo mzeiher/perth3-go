@@ -29,7 +29,7 @@ $$hcos_{c}(lat,lon) = A_{c}(lat,lon)*cos(\omega_{c}(lat,lon)*\frac{\pi}{180})$$
 
 $$hsin_{c}(lat,lon) = A_{c}(lat,lon)*sin(\omega_{c}(lat,lon)*\frac{\pi}{180})$$
 
-this leads to the following equation:
+this will give us the amplitude of the cosinus component $hcos_c$ and the amplitude of the sinus component $hsin_c$. With the following equation we can now calculate the height of the phase shifted curve for $(lat, lon)$ and time $t$:
 
 $$height_c(lat,lon, t) = hcos_c(lat,lon)*cos(t)+hsin_c(lat,lon)*sin(t)$$
 
@@ -41,8 +41,8 @@ Now things get a bit more complex. With this base equation we now get the $heigh
 the argument $ARG_c$ and nodal correction $U_c$ effect the frequency of the constituents curve, the nodal correction $F_c$  effect its amplitude. You can take a look in the code how these values are calculated for each known constituent and which celestial bodies and its position they take into account.
 
 With all of these equations and information we now can formulate the equation to get the calculated height $h(lat,lon,t)$ for a specific location and time for all known constituents $c$
-$$h(lat,lon, t) = \sum_{c=P1,O1,...}{hcos_c(lat,lon)*F(t)*cos(ARG_c(t)+U_c(t)*\frac{\pi}{180})+
-hsin_c(lat,lon)*F(t)*sin(ARG_c(t)+U_c(t)*\frac{\pi}{180})}$$ 
+
+$$h(lat,lon, t) = \sum_{c=P1,O1,...}{hcos_c(lat,lon)*F(t)*cos(ARG_c(t)+U_c(t)*\frac{\pi}{180})+hsin_c(lat,lon)*F(t)*sin(ARG_c(t)+U_c(t)*\frac{\pi}{180})}$$ 
 
 Ok, now to get the tide height for display, for this we need to know some oceanographic datums, in our case the **LAT** the lat is the lowest astronomical tide, meaning the lowest a tide can get only depending on the tide equation, don't taking local phenomenon like storm surges, wind, etc into account (HAT is the highest astronomical tide). Maps for navigation typically denote all depths relative to the LAT, meaning if the tide is at its lowest possible and the map is blue at your position you still have water under the keel :D. To calculate the $LAT(lat,lon)$ you need to find the lowest value of $h(lat,lon)$ over a time interval of ~19 years. Why 19years?, this has to do with the movement of celestial bodies, the chances are high, that within this 19years the bodies are aligned to create the HAT and LAT.
 
