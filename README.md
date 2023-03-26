@@ -5,15 +5,15 @@ The tool currently works with DTU-16 files from the danish technical university.
 # Getting Started
 To calculate the current tide for a specific point and time you first need to download and extract the DTU-16 constituent file from the DTU ftp: `ftp://ftp.space.dtu.dk/pub/DTU16/OCEAN_TIDE/PERTH3/fort.30.gz`
 
-either use the precompiled tool `createtidedatadb` or use the substitue the command with `go run ./cmd/createtidedatadb/main.go` to create constituent database with precalculated data for each constituent
+either use the precompiled tool `createconstituentdb` or use the substitue the command with `go run ./cmd/createconstituentdb/main.go` to create constituent database with precalculated data for each constituent
 ```bash
-createtidedatadb ./fort.30 ./dtu16.tidedatadb
+createconstituentdb ./fort.30 ./dtu16.constituentdb
 ```
 
-after creating the tide data base you can use the tool `calculatetides` or `go run ./cmd/calculatetides/main.go`
+after creating the tide database you can use the tool `calculatetides` or `go run ./cmd/calculatetides/main.go`
 
 ```bash
-calculatetides -constituentdb ./dtu16.tidedatadb -tstart "1985-01-01T00:00:00.000Z" -tend "1985-01-01T01:00:00.000Z" "37.010503,-8.962977"
+calculatetides -constituentdb ./dtu16.constituentdb -tstart "1985-01-01T00:00:00.000Z" -tend "1985-01-01T01:00:00.000Z" "37.010503,-8.962977"
 ```
 this will calculate the height of the tide at a specific point and time, the time must be in RFC3339 format
 
