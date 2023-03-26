@@ -22,12 +22,12 @@ func GetEphemerisTimeSimple(utcTime time.Time) float64 {
 	return (tt - 2451545.0) / 36525.0
 }
 
-func GetEphemerisTimeLookup(utcTime time.Time) float64 {
+func GetEphemerisTimeCorrected(utcTime time.Time) float64 {
 	mjd := UTCTimeToMJD(utcTime)
 
 	// Convert MJD to Julian Day (JD)
 	jd := mjd + 2400000.5
-	deltaT := getDeltaTLookup(utcTime)
+	deltaT := getDeltaTCorrection(utcTime)
 
 	// Convert JD to Terrestrial Time (TT)
 	tt := jd + deltaT/86400.0
@@ -36,7 +36,7 @@ func GetEphemerisTimeLookup(utcTime time.Time) float64 {
 	return (tt - 2451545.0) / 36525.0
 }
 
-func getDeltaTLookup(utcTime time.Time) float64 {
+func getDeltaTCorrection(utcTime time.Time) float64 {
 	year := utcTime.Year()
 
 	var secdif float64 = 0.0

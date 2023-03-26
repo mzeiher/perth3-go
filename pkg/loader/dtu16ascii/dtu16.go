@@ -1,4 +1,4 @@
-package loader
+package dtu16ascii
 
 import (
 	"bufio"
@@ -8,31 +8,33 @@ import (
 	"strings"
 
 	"github.com/mzeiher/perth3-go/pkg/constituents"
+	"github.com/mzeiher/perth3-go/pkg/loader/constituentdata"
 )
 
 type asciiTideFile struct {
-	TideDataLoader
+	constituentdata.ConstituentDataLoader
 	reader *bufio.Reader
+	file   *os.File
 }
 
 type asciiTideHeader struct {
-	longitudeMin float64
-	longitudeMax float64
-	latitudeMin  float64
-	latitudeMax  float64
+	longitudeMin float32
+	longitudeMax float32
+	latitudeMin  float32
+	latitudeMax  float32
 
-	constituentType constituents.TideValueType
-	constituent     constituents.TideConstituent
+	constituentType constituentdata.ConstituentValueType
+	constituent     constituents.Constituent
 
-	undefValue     float64
+	undefValue     float32
 	entriesPerLine int
 
 	gridX int
 	gridY int
 }
 
-func CreateNewAsciiTideLoader(path string) (TideDataLoader, error) {
-	file, err := os.Open(path)
+func CreateDTU16Loader(filePath string) (constituentdata.ConstituentDataLoader, error) {
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -40,17 +42,22 @@ func CreateNewAsciiTideLoader(path string) (TideDataLoader, error) {
 
 	return &asciiTideFile{
 		reader: reader,
+		file:   file,
 	}, nil
 }
 
-func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, error) {
+func (a *asciiTideFile) Close() error {
+	return a.file.Close()
+}
+
+func (a *asciiTideFile) GetNextConstituentData() (*constituentdata.TideConstituentData, error) {
 
 	header, err := a.ParseHeader()
 	if err != nil {
 		return nil, err
 	}
 
-	gridData := &constituents.TideConstituentData{
+	gridData := &constituentdata.TideConstituentData{
 		Constituent:  header.constituent,
 		Type:         header.constituentType,
 		LatitudeMin:  header.latitudeMin,
@@ -62,13 +69,13 @@ func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, er
 		SizeY: header.gridY,
 
 		UndefValue: header.undefValue,
-		Data:       make([][]float64, header.gridY),
+		Data:       make([][]float32, header.gridY),
 	}
 
 	numberEntries := header.gridX * header.gridY
 	currentY := 0
 	currentEntry := 0
-	gridData.Data[currentY] = make([]float64, header.gridX)
+	gridData.Data[currentY] = make([]float32, header.gridX)
 	for {
 
 		line, err := a.reader.ReadString('\n')
@@ -86,15 +93,15 @@ func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, er
 			}
 			if currentEntry >= header.gridX*(currentY+1) {
 				currentY = currentY + 1
-				gridData.Data[currentY] = make([]float64, header.gridX)
+				gridData.Data[currentY] = make([]float32, header.gridX)
 			}
 
-			entryParsed, err := strconv.ParseFloat(entry, 64)
+			entryParsed, err := strconv.ParseFloat(entry, 32)
 			if err != nil {
 				return nil, err
 			}
 			xPos := ((currentY * header.gridX) - currentEntry) * -1
-			gridData.Data[currentY][xPos] = entryParsed
+			gridData.Data[currentY][xPos] = float32(entryParsed)
 
 			if currentEntry == numberEntries-1 && index == len(entries)-1 {
 				// we reached the end and red all entries
@@ -110,98 +117,92 @@ func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, er
 }
 
 func (a *asciiTideFile) ParseHeader() (asciiTideHeader, error) {
-	asciHeader := asciiTideHeader{}
+	asciiHeader := asciiTideHeader{}
 
 	// try to read the title
 	title, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	constituentFound := false
-	for _, currentConstituent := range constituents.TideConstituents {
-		if strings.HasPrefix(title, string(currentConstituent)) {
-			constituentFound = true
-			asciHeader.constituent = currentConstituent
-			break
-		}
+	constituent, err := constituents.FromString(strings.Fields(title)[0])
+	if err != nil {
+		return asciiHeader, fmt.Errorf("unknown constituent in title %s", title)
 	}
-	if !constituentFound {
-		return asciHeader, fmt.Errorf("unknown constituent in title %s", title)
-	}
+	asciiHeader.constituent = constituent
 
 	if strings.Contains(strings.ToLower(title), "amplitude") {
-		asciHeader.constituentType = constituents.AMPLITUDE
+		asciiHeader.constituentType = constituentdata.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(title), "phase") {
-		asciHeader.constituentType = constituents.PHASE
+		asciiHeader.constituentType = constituentdata.PHASE
 	}
 
 	// try to get type in second line
 	description, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 	if strings.Contains(strings.ToLower(description), "amplitude") {
-		asciHeader.constituentType = constituents.AMPLITUDE
+		asciiHeader.constituentType = constituentdata.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(description), "phase") {
-		asciHeader.constituentType = constituents.PHASE
+		asciiHeader.constituentType = constituentdata.PHASE
 	}
-	if asciHeader.constituentType == "" {
-		return asciHeader, fmt.Errorf("constituent type not found")
+	if asciiHeader.constituentType == "" {
+		return asciiHeader, fmt.Errorf("constituent type not found")
 	}
 
 	// read grid size (x,y)
 	gridSize, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	_, err = fmt.Sscanf(gridSize, "%d %d", &asciHeader.gridY, &asciHeader.gridX)
+	_, err = fmt.Sscanf(gridSize, "%d %d", &asciiHeader.gridY, &asciiHeader.gridX)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read latitude min/max
 	latMinMax, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	_, err = fmt.Sscanf(latMinMax, "%f %f", &asciHeader.latitudeMin, &asciHeader.latitudeMax)
+	_, err = fmt.Sscanf(latMinMax, "%f %f", &asciiHeader.latitudeMin, &asciiHeader.latitudeMax)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read latitude min/max
 	lonMinMax, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	_, err = fmt.Sscanf(lonMinMax, "%f %f", &asciHeader.longitudeMin, &asciHeader.longitudeMax)
+	_, err = fmt.Sscanf(lonMinMax, "%f %f", &asciiHeader.longitudeMin, &asciiHeader.longitudeMax)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read UNDEF value
 	undefValue, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
-	_, err = fmt.Sscanf(undefValue, "%f", &asciHeader.undefValue)
+	_, err = fmt.Sscanf(undefValue, "%f", &asciiHeader.undefValue)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read and forget fortran format
 	entriesPerLine, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
-	_, err = fmt.Sscanf(entriesPerLine, "(%d", &asciHeader.entriesPerLine)
+	_, err = fmt.Sscanf(entriesPerLine, "(%d", &asciiHeader.entriesPerLine)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	return asciHeader, nil
+	return asciiHeader, nil
 }

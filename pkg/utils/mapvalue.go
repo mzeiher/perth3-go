@@ -1,6 +1,6 @@
 package utils
 
-func MapValue(value float64, fromMin float64, fromMax float64, toMin float64, toMax float64) float64 {
+func MapValue(value float32, fromMin float32, fromMax float32, toMin float32, toMax float32) float32 {
 	// Calculate the range of values for both the source and target ranges
 	fromRange := fromMax - fromMin
 	toRange := toMax - toMin
