@@ -9,6 +9,7 @@ import (
 
 	"github.com/mzeiher/perth3-go/pkg/solver"
 	"github.com/mzeiher/perth3-go/pkg/tidedatadb"
+	"github.com/mzeiher/perth3-go/pkg/tidedatums"
 )
 
 const supportedSolvers = "Supported solver:\n" +
@@ -23,13 +24,13 @@ func main() {
 	flag.StringVar(&tideDataCache, "tideDataCache", "", "Path to tide data cache (optional)")
 
 	var startTimeString string
-	flag.StringVar(&startTimeString, "tstart", time.Now().Format(time.RFC3339), "start time in rfc3339 format (default: now")
+	flag.StringVar(&startTimeString, "tstart", time.Now().Format(time.RFC3339), "start time in rfc3339 format")
 
 	var endTimeString string
 	flag.StringVar(&endTimeString, "tend", "", "end time in rfc3339 format (optional)")
 
-	var stepDurationSecondsInt int
-	flag.IntVar(&stepDurationSecondsInt, "stepDurationSeconds", 60, "step duration in seconds (default: 60)")
+	var stepDurationString string
+	flag.StringVar(&stepDurationString, "stepduration", "60s", "step duration in seconds")
 
 	var solverString string
 	flag.StringVar(&solverString, "solver", "perth3", "solver to use")
@@ -68,7 +69,7 @@ func main() {
 	if err != nil {
 		printHelpAndExit(err)
 	}
-	stepDuration, err := time.ParseDuration(fmt.Sprintf("%ds", stepDurationSecondsInt))
+	stepDuration, err := time.ParseDuration(stepDurationString)
 	if err != nil {
 		printHelpAndExit(err)
 	}
@@ -84,13 +85,27 @@ func main() {
 		printHelpAndExit(err)
 	}
 
+	tideDatums, err := tidedatums.GetDatumsForLatLan(constituentDb, solverString, lat, lon)
+	if err != nil {
+		panic(err)
+	}
+
 	currentTime := startTimeUTC
+
+	fmt.Printf("%-10s %10.4fcm\n", "LAT", tideDatums.LAT)
+	fmt.Printf("%-10s %10.4fcm\n", "MSL", tideDatums.MSL)
+	fmt.Printf("%-10s %10.4fcm\n", "HAT", tideDatums.HAT)
+	fmt.Printf("\n")
+	fmt.Printf("%-25s %-11s %-11s\n", "date", "height (cm)", "tide (cm)")
 	for {
 		tideHeight, err := solverFunc(constituentDb, lat, lon, currentTime)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%s %10.4f\n", currentTime.Local().Format(time.RFC3339), tideHeight)
+
+		tideHeightLAT := tideHeight - (float64(tideDatums.LAT - tideDatums.MSL))
+
+		fmt.Printf("%-25s %11.4f %11.4f\n", currentTime.Local().Format(time.RFC3339), tideHeightLAT, tideHeight)
 
 		currentTime = currentTime.Add(stepDuration)
 		if endTimeUTC.Sub(currentTime) < 0 {

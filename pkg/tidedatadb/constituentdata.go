@@ -164,10 +164,10 @@ func (c *ConstituentData) GetDataInterpolatedLatLon(lat float32, lon float32) (*
 	if err != nil {
 		return nil, err
 	}
-	if c.ConstituentInfo.AmplitudeUnit == UNIT_CM {
-		rawData[0] = rawData[0] / 100
+	if c.ConstituentInfo.AmplitudeUnit == UNIT_METER {
+		rawData[0] = rawData[0] * 100
 	} else if c.ConstituentInfo.AmplitudeUnit == UNIT_FEET {
-		rawData[0] = rawData[0] * 0.3048
+		rawData[0] = rawData[0] * 30.48
 	}
 	if c.ConstituentInfo.PhaseUnit == UNIT_RADIAN {
 		rawData[1] = rawData[1] * (180 / math.Pi)

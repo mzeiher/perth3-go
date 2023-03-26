@@ -99,7 +99,7 @@ func main() {
 			UndefValue:    tideDataAmp.UndefValue,
 		}, tidedatadb.ConstituentInfo{
 			Constituent:   tideDataAmp.Constituent,
-			AmplitudeUnit: tidedatadb.UNIT_METER,
+			AmplitudeUnit: tidedatadb.UNIT_CM,
 			PhaseUnit:     tidedatadb.UNIT_DEGREE,
 		})
 		if err != nil {
