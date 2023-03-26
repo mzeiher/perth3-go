@@ -5,20 +5,47 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "Launch Create Tide Data DB",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/ascii2dat/main.go",
-            "cwd": "${workspaceFolder}"
+            "program": "${workspaceFolder}/cmd/createtidedatadb/main.go",
+            "args": ["./../perth3-go/.data/tide/fort.30", "./.data/dtu16.tidedatadb"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "rm-tidedatadb",
         },
         {
-            "name": "Launch test",
+            "name": "Get Tide For Point",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/test/main.go",
-            "cwd": "${workspaceFolder}"
-        }
+            "program": "${workspaceFolder}/cmd/calculatetides/main.go",
+            "args": ["-constituentdb", "./.data/dtu16.tidedatadb","-tstart","1985-01-01T00:00:00.000Z","-tend","1985-01-01T01:00:00.000Z", "37.010503,-8.962977"],
+            "cwd": "${workspaceFolder}",
+        },
+        {
+            "name": "(gdb) Launch gettide1",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/.fortran/gettide1",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/.fortran",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
     ]
 }

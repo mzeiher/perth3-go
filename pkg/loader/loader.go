@@ -1,17 +1,23 @@
 package loader
 
 import (
-	"github.com/mzeiher/perth3-go/pkg/constituents"
-	"github.com/mzeiher/perth3-go/pkg/mss"
+	"errors"
+
+	"github.com/mzeiher/perth3-go/pkg/loader/constituentdata"
+	"github.com/mzeiher/perth3-go/pkg/loader/dtu16ascii"
 )
 
-type TideDataLoader interface {
+var ErrNoLoaderFound = errors.New("no loader found for selected format")
 
-	// returns the next set of grid data, where Data[0][0] is the south-west corner and Data[M][N] is the northeast corner
-	// if the end is reached and no more data is available a `io.EOF` error is thrown
-	GetNextTideGrid() (*constituents.TideConstituentData, error)
+var loader map[string]constituentdata.CreateLoaderFunction = make(map[string]constituentdata.CreateLoaderFunction)
+
+func init() {
+	loader["dtu16ascii"] = dtu16ascii.CreateDTU16Loader
 }
 
-type MeanSeaSurfaceLoader interface {
-	GetMSSData() (*mss.MedianSeaSurfaceData, error)
+func GetLoader(format string, filePath string) (constituentdata.ConstituentDataLoader, error) {
+	if loader[format] == nil {
+		return nil, ErrNoLoaderFound
+	}
+	return loader[format](filePath)
 }

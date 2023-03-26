@@ -7,11 +7,16 @@ import (
 	"github.com/mzeiher/perth3-go/pkg/datetime"
 )
 
-type SHPNP struct {
-	L_s  float64
-	L_h  float64
-	L_p  float64
-	L_N  float64
+type MeanLongitudes struct {
+	//mean longitude of moon
+	L_s float64
+	// mean longitude of sun
+	L_h float64
+	//mean longitude of lunar perigee
+	L_p float64
+	// mean longitude of ascending lunar node
+	L_N float64
+	// mean longitude of solar perigee
 	L_P1 float64
 }
 
@@ -32,52 +37,52 @@ type SHPNP struct {
 //
 //	the subtle differences of UTC, UT1, etc.  This is more than adequate
 //	for the calculation of these arguments, especially in tidal studies.
-func Compute5BasicAstronomicalMeanLongitudesInDegree(utcTime time.Time) SHPNP {
+func ComputeAstronomicalMeanLongitudesInDegree(utcTime time.Time) MeanLongitudes {
 	const CIRCLE float64 = 360
 
-	et := datetime.GetEphemerisTimeLookup(utcTime)
+	et := datetime.GetEphemerisTimeCorrected(utcTime)
 
-	shpnp := SHPNP{}
+	meanLongitudes := MeanLongitudes{}
 
 	// mean longitude of moon (p.338)
-	shpnp.L_s = (((-1.53388e-8*et+1.855835e-6)*et-1.5786e-3)*et+481267.88123421)*et + 218.3164477
+	meanLongitudes.L_s = (((-1.53388e-8*et+1.855835e-6)*et-1.5786e-3)*et+481267.88123421)*et + 218.3164477
 
 	// mean elongation of moon (p.338)
 	D := (((-8.8445-9*et+1.83195e-6)*et-1.8819e-3)*et+445267.1114034)*et + 297.8501921
 
 	// mean longitude of sun
-	shpnp.L_h = shpnp.L_s - D
+	meanLongitudes.L_h = meanLongitudes.L_s - D
 
-	//mean longitude of lunar perigee (p.343)
-	shpnp.L_p = ((-1.249172e-5*et-1.032e-2)*et+4069.0137287)*et + 83.3532465
+	// mean longitude of lunar perigee (p.343)
+	meanLongitudes.L_p = ((-1.249172e-5*et-1.032e-2)*et+4069.0137287)*et + 83.3532465
 
 	// mean longitude of ascending lunar node (p.144)
-	shpnp.L_N = ((2.22222e-6*et+2.0708e-3)*et-1934.136261)*et + 125.04452
+	meanLongitudes.L_N = ((2.22222e-6*et+2.0708e-3)*et-1934.136261)*et + 125.04452
 
 	// mean longitude of solar perigee (Simon et al., 1994)
-	shpnp.L_P1 = 282.94 + 1.7192*et
+	meanLongitudes.L_P1 = 282.94 + 1.7192*et
 
-	shpnp.L_s = math.Mod(shpnp.L_s, CIRCLE)
-	shpnp.L_h = math.Mod(shpnp.L_h, CIRCLE)
-	shpnp.L_p = math.Mod(shpnp.L_p, CIRCLE)
-	shpnp.L_N = math.Mod(shpnp.L_N, CIRCLE)
-	shpnp.L_P1 = math.Mod(shpnp.L_P1, CIRCLE)
+	meanLongitudes.L_s = math.Mod(meanLongitudes.L_s, CIRCLE)
+	meanLongitudes.L_h = math.Mod(meanLongitudes.L_h, CIRCLE)
+	meanLongitudes.L_p = math.Mod(meanLongitudes.L_p, CIRCLE)
+	meanLongitudes.L_N = math.Mod(meanLongitudes.L_N, CIRCLE)
+	meanLongitudes.L_P1 = math.Mod(meanLongitudes.L_P1, CIRCLE)
 
-	if shpnp.L_s < 0 {
-		shpnp.L_s = shpnp.L_s + CIRCLE
+	if meanLongitudes.L_s < 0 {
+		meanLongitudes.L_s = meanLongitudes.L_s + CIRCLE
 	}
-	if shpnp.L_h < 0 {
-		shpnp.L_h = shpnp.L_h + CIRCLE
+	if meanLongitudes.L_h < 0 {
+		meanLongitudes.L_h = meanLongitudes.L_h + CIRCLE
 	}
-	if shpnp.L_p < 0 {
-		shpnp.L_p = shpnp.L_p + CIRCLE
+	if meanLongitudes.L_p < 0 {
+		meanLongitudes.L_p = meanLongitudes.L_p + CIRCLE
 	}
-	if shpnp.L_N < 0 {
-		shpnp.L_N = shpnp.L_N + CIRCLE
+	if meanLongitudes.L_N < 0 {
+		meanLongitudes.L_N = meanLongitudes.L_N + CIRCLE
 	}
-	if shpnp.L_P1 < 0 {
-		shpnp.L_P1 = shpnp.L_P1 + CIRCLE
+	if meanLongitudes.L_P1 < 0 {
+		meanLongitudes.L_P1 = meanLongitudes.L_P1 + CIRCLE
 	}
 
-	return shpnp
+	return meanLongitudes
 }

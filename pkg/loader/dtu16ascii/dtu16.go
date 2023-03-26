@@ -1,4 +1,4 @@
-package loader
+package dtu16ascii
 
 import (
 	"bufio"
@@ -8,31 +8,33 @@ import (
 	"strings"
 
 	"github.com/mzeiher/perth3-go/pkg/constituents"
+	"github.com/mzeiher/perth3-go/pkg/loader/constituentdata"
 )
 
 type asciiTideFile struct {
-	TideDataLoader
+	constituentdata.ConstituentDataLoader
 	reader *bufio.Reader
+	file   *os.File
 }
 
 type asciiTideHeader struct {
-	longitudeMin float64
-	longitudeMax float64
-	latitudeMin  float64
-	latitudeMax  float64
+	longitudeMin float32
+	longitudeMax float32
+	latitudeMin  float32
+	latitudeMax  float32
 
-	constituentType constituents.TideValueType
-	constituent     constituents.TideConstituent
+	constituentType constituentdata.ConstituentValueType
+	constituent     constituents.Constituent
 
-	undefValue     float64
+	undefValue     float32
 	entriesPerLine int
 
 	gridX int
 	gridY int
 }
 
-func CreateNewAsciiTideLoader(path string) (TideDataLoader, error) {
-	file, err := os.Open(path)
+func CreateDTU16Loader(filePath string) (constituentdata.ConstituentDataLoader, error) {
+	file, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -40,17 +42,22 @@ func CreateNewAsciiTideLoader(path string) (TideDataLoader, error) {
 
 	return &asciiTideFile{
 		reader: reader,
+		file:   file,
 	}, nil
 }
 
-func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, error) {
+func (a *asciiTideFile) Close() error {
+	return a.file.Close()
+}
+
+func (a *asciiTideFile) GetNextConstituentData() (*constituentdata.TideConstituentData, error) {
 
 	header, err := a.ParseHeader()
 	if err != nil {
 		return nil, err
 	}
 
-	gridData := &constituents.TideConstituentData{
+	gridData := &constituentdata.TideConstituentData{
 		Constituent:  header.constituent,
 		Type:         header.constituentType,
 		LatitudeMin:  header.latitudeMin,
@@ -62,13 +69,13 @@ func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, er
 		SizeY: header.gridY,
 
 		UndefValue: header.undefValue,
-		Data:       make([][]float64, header.gridY),
+		Data:       make([][]float32, header.gridY),
 	}
 
 	numberEntries := header.gridX * header.gridY
 	currentY := 0
 	currentEntry := 0
-	gridData.Data[currentY] = make([]float64, header.gridX)
+	gridData.Data[currentY] = make([]float32, header.gridX)
 	for {
 
 		line, err := a.reader.ReadString('\n')
@@ -86,15 +93,15 @@ func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, er
 			}
 			if currentEntry >= header.gridX*(currentY+1) {
 				currentY = currentY + 1
-				gridData.Data[currentY] = make([]float64, header.gridX)
+				gridData.Data[currentY] = make([]float32, header.gridX)
 			}
 
-			entryParsed, err := strconv.ParseFloat(entry, 64)
+			entryParsed, err := strconv.ParseFloat(entry, 32)
 			if err != nil {
 				return nil, err
 			}
 			xPos := ((currentY * header.gridX) - currentEntry) * -1
-			gridData.Data[currentY][xPos] = entryParsed
+			gridData.Data[currentY][xPos] = float32(entryParsed)
 
 			if currentEntry == numberEntries-1 && index == len(entries)-1 {
 				// we reached the end and red all entries
@@ -118,22 +125,16 @@ func (a *asciiTideFile) ParseHeader() (asciiTideHeader, error) {
 		return asciiHeader, err
 	}
 
-	constituentFound := false
-	for _, currentConstituent := range constituents.TideConstituents {
-		if strings.HasPrefix(title, string(currentConstituent)) {
-			constituentFound = true
-			asciiHeader.constituent = currentConstituent
-			break
-		}
-	}
-	if !constituentFound {
+	constituent, err := constituents.FromString(strings.Fields(title)[0])
+	if err != nil {
 		return asciiHeader, fmt.Errorf("unknown constituent in title %s", title)
 	}
+	asciiHeader.constituent = constituent
 
 	if strings.Contains(strings.ToLower(title), "amplitude") {
-		asciiHeader.constituentType = constituents.AMPLITUDE
+		asciiHeader.constituentType = constituentdata.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(title), "phase") {
-		asciiHeader.constituentType = constituents.PHASE
+		asciiHeader.constituentType = constituentdata.PHASE
 	}
 
 	// try to get type in second line
@@ -142,9 +143,9 @@ func (a *asciiTideFile) ParseHeader() (asciiTideHeader, error) {
 		return asciiHeader, err
 	}
 	if strings.Contains(strings.ToLower(description), "amplitude") {
-		asciiHeader.constituentType = constituents.AMPLITUDE
+		asciiHeader.constituentType = constituentdata.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(description), "phase") {
-		asciiHeader.constituentType = constituents.PHASE
+		asciiHeader.constituentType = constituentdata.PHASE
 	}
 	if asciiHeader.constituentType == "" {
 		return asciiHeader, fmt.Errorf("constituent type not found")

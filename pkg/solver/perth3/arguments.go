@@ -1,4 +1,4 @@
-package tide
+package perth3
 
 import (
 	"time"
@@ -7,16 +7,15 @@ import (
 	"github.com/mzeiher/perth3-go/pkg/datetime"
 )
 
-// return arg[0..27]
-func DetermineEquilibriumTidalArguments(utcTime time.Time) []float64 {
+func CalculateArguments(timeUtc time.Time) []float64 {
 
 	// hour := utcTime.Hour()
-	mjd := datetime.UTCTimeToMJD(utcTime)
+	mjd := datetime.UTCTimeToMJD(timeUtc)
 	julHour := float64(mjd-float64(int(mjd))) * 24
 	t1 := float64(15 * julHour)
 	t2 := float64(30 * julHour)
 
-	shpn := astro.Compute5BasicAstronomicalMeanLongitudesInDegree(utcTime)
+	shpn := astro.ComputeAstronomicalMeanLongitudesInDegree(timeUtc)
 
 	arg := make([]float64, 28)
 
@@ -50,4 +49,5 @@ func DetermineEquilibriumTidalArguments(utcTime time.Time) []float64 {
 	arg[27] = 2 * arg[5]                                   // M4
 
 	return arg
+
 }

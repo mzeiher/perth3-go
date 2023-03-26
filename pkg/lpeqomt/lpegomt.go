@@ -1,4 +1,4 @@
-package tide
+package lpeqomt
 
 import (
 	"math"
@@ -7,10 +7,10 @@ import (
 	"github.com/mzeiher/perth3-go/pkg/astro"
 )
 
-func CalculateLongPeriodEquilibriumOceanMeanTide(timeUtc time.Time, lat float64) float64 {
+func CalculateLongPeriodEquilibriumOceanMeanTide(timeUtc time.Time, lat float32) float64 {
 
 	const PSOL = 283 * (math.Pi / 180)
-	shpnp := astro.Compute5BasicAstronomicalMeanLongitudesInDegree(timeUtc)
+	shpnp := astro.ComputeAstronomicalMeanLongitudesInDegree(timeUtc)
 	// mjdInSeconds := datetime.UTCTimeToMJD(timeUtc) * 86400
 	// et := (mjdInSeconds - 4043174400) / 86400
 	// shpnp := astro.SHPNP{

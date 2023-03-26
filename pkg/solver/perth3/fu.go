@@ -1,4 +1,4 @@
-package tide
+package perth3
 
 import (
 	"math"
@@ -8,9 +8,9 @@ import (
 )
 
 // return f[0..27] and u[0..27] for time
-func DetermineNodalCorrections(utcTime time.Time) ([]float64, []float64) {
+func CalculateNodalCorrections(utcTime time.Time) ([]float64, []float64) {
 
-	shpn := astro.Compute5BasicAstronomicalMeanLongitudesInDegree(utcTime)
+	shpn := astro.ComputeAstronomicalMeanLongitudesInDegree(utcTime)
 
 	sinn := math.Sin(shpn.L_N * (math.Pi / 180))
 	cosn := math.Cos(shpn.L_N * (math.Pi / 180))
