@@ -7,14 +7,14 @@ import (
 	"io"
 	"os"
 
-	"github.com/mzeiher/perth3-go/v2/pkg/loader"
-	"github.com/mzeiher/perth3-go/v2/pkg/tidedatadb"
+	"github.com/mzeiher/perth3-go/pkg/loader"
+	"github.com/mzeiher/perth3-go/pkg/tidedatadb"
 )
 
 const supportedFormats = "Supported Formats:\n" +
-	"dtu16ascii ascii representation of DTU16 files (.fort30)\n" +
-	"           all tide constituents should be concatenated before loading\n" +
-	"           cat q1.d o1.d p1.d s1.d k1.d n2.d m2.d s2.d k2.d m4.d > fort.30\n"
+	"dtu16ascii - ascii representation of DTU16 files (.fort30)\n" +
+	"             all tide constituents should be concatenated before loading\n" +
+	"             cat q1.d o1.d p1.d s1.d k1.d n2.d m2.d s2.d k2.d m4.d > fort.30\n"
 
 // this command line utility creates a lookup database for the sin and cos components of
 // the provided constituents.

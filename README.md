@@ -1,10 +1,26 @@
-This is a golang port of the perth-3 tide calculation algorithm: https://github.com/asbjorn-christensen/GridWetData/blob/master/fortran_sources/perth3.f
+# perth3-go
+This is a golang port of the perth-3 tide calculation algorithm: https://github.com/asbjorn-christensen/GridWetData/blob/master/fortran_sources/perth3.f, further algorithms will follow
+The tool currently works with DTU-16 files from the danish technical university.
 
-The tool currently works with DTU-16 files from the danish technical university: ftp://ftp.space.dtu.dk/pub/DTU16/OCEAN_TIDE
+# Getting Started
+To calculate the current tide for a specific point and time you first need to download and extract the DTU-16 constituent file from the DTU ftp: `ftp://ftp.space.dtu.dk/pub/DTU16/OCEAN_TIDE/PERTH3/fort.30.gz`
 
-`./cmd/ascii2dat/main.go` will read a fort.30 file (DTU-16) for constituents and DTU15MSS_2min.mss (DTU-15) for median sea surface height and outputs pre-computed values for all the constituents and mss to a bin file.
+either use the precompiled tool `createtidedatadb` or use the substitue the command with `go run ./cmd/createtidedatadb/main.go` to create constituent database with precalculated data for each constituent
+```bash
+createtidedatadb ./fort.30 ./dtu16.tidedatadb
+```
 
-`./cmd/test/main.go` can read the created bin file and output the tides for a specific location/time
+after creating the tide data base you can use the tool `calculatetides` or `go run ./cmd/calculatetides/main.go`
+
+```bash
+calculatetides -constituentdb ./dtu16.tidedatadb -tstart "1985-01-01T00:00:00.000Z" -tend "1985-01-01T01:00:00.000Z" "37.010503,-8.962977"
+```
+this will calculate the height of the tide at a specific point and time, the time must be in RFC3339 format
+
+Currently LAT and MSS for the point is not yet calculated to get a relative tide height at the point, but will follow.
+
+
+If you want to run the original tool, you can copy the fort.30 file into the same folder as the gettide1.f file and build the tool with the Makefile in the folder (gfortran must be installed)
 
 # Brief introduction to tide calculation
 Tides..., how do they work and how can this tool "predict" the tides at a specific location and time. The explanation you got in school about the moon attracting a body of water is just one very small part of the whole truth.

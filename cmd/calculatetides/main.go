@@ -1,15 +1,18 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/mzeiher/perth3-go/v2/pkg/astro"
-	"github.com/mzeiher/perth3-go/v2/pkg/constituents"
-	"github.com/mzeiher/perth3-go/v2/pkg/tidedatadb"
+	"github.com/mzeiher/perth3-go/pkg/solver"
+	"github.com/mzeiher/perth3-go/pkg/tidedatadb"
 )
+
+const supportedSolvers = "Supported solver:\n" +
+	"perth3 - perth3 solver from the dtu\n"
 
 func main() {
 
@@ -23,10 +26,13 @@ func main() {
 	flag.StringVar(&startTimeString, "tstart", time.Now().Format(time.RFC3339), "start time in rfc3339 format (default: now")
 
 	var endTimeString string
-	flag.StringVar(&endTimeString, "tend", time.Now().Format(time.RFC3339), "end time in rfc3339 format (optional)")
+	flag.StringVar(&endTimeString, "tend", "", "end time in rfc3339 format (optional)")
 
 	var stepDurationSecondsInt int
 	flag.IntVar(&stepDurationSecondsInt, "stepDurationSeconds", 60, "step duration in seconds (default: 60)")
+
+	var solverString string
+	flag.StringVar(&solverString, "solver", "perth3", "solver to use")
 
 	var help bool
 	flag.BoolVar(&help, "help", false, "print help")
@@ -55,6 +61,9 @@ func main() {
 	if err != nil {
 		printHelpAndExit(err)
 	}
+	if endTimeString == "" {
+		endTimeString = startTimeString
+	}
 	endTime, err := time.Parse(time.RFC3339, endTimeString)
 	if err != nil {
 		printHelpAndExit(err)
@@ -66,21 +75,28 @@ func main() {
 	startTimeUTC := startTime.UTC()
 	endTimeUTC := endTime.UTC()
 
-	fmt.Printf("%s, %s, %s\n", startTimeUTC.String(), endTimeUTC.String(), stepDuration.String())
+	if endTimeUTC.Sub(startTimeUTC) < 0 {
+		printHelpAndExit(errors.New("start time must be before end time"))
+	}
 
-	fmt.Printf("%+v\n", astro.ComputeAstronomicalMeanLongitudesInDegree(startTimeUTC))
-
-	constituentData, err := constituentDb.GetConstituentData(constituents.C_Q1)
+	solverFunc, err := solver.GetSolver(solverString)
 	if err != nil {
 		printHelpAndExit(err)
 	}
 
-	data, err := constituentData.GetDataInterpolatedLatLon(lat, lon)
-	if err != nil {
-		printHelpAndExit(err)
-	}
+	currentTime := startTimeUTC
+	for {
+		tideHeight, err := solverFunc(constituentDb, lat, lon, currentTime)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%s %10.4f\n", currentTime.Local().Format(time.RFC3339), tideHeight)
 
-	fmt.Printf("%v", data)
+		currentTime = currentTime.Add(stepDuration)
+		if endTimeUTC.Sub(currentTime) < 0 {
+			return
+		}
+	}
 
 }
 
@@ -90,6 +106,7 @@ func printHelpAndExit(err error) {
 	}
 	fmt.Fprintf(os.Stderr, "Usage of %s %s:\n", os.Args[0], " [OPTIONS] \"lat,lon\"")
 	flag.PrintDefaults()
+	fmt.Fprintf(os.Stderr, "\n%s", supportedSolvers)
 	if err != nil {
 		os.Exit(-1)
 	} else {

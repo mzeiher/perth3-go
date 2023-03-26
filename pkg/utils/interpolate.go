@@ -9,8 +9,8 @@ func InterpolateValues(lat float32, lon float32, minLat float32, maxLat float32,
 	xResInDegree := (maxLon - minLon) / float32(gridSizeX-1)
 	yResInDegree := (maxLat - minLat) / float32(gridSizeY-1)
 
-	x0PosForLon := MapValue(lon, minLon, maxLon, 0, float32(gridSizeX)-1)
-	y0PosForLat := MapValue(lat, minLat, maxLat, 0, float32(gridSizeY)-1)
+	x0PosForLon := MapValue(lon, minLon, maxLon, 0, float32(gridSizeX-1))
+	y0PosForLat := MapValue(lat, minLat, maxLat, 0, float32(gridSizeY-1))
 
 	x0PosForLonInt := uint32(x0PosForLon)
 	y0PosForLatInt := uint32(y0PosForLat)

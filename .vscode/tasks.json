@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "rm-tidedatadb",
+            "command": "rm",
+            "type": "shell",
+            "args": ["-f", "./.data/constituents.tidedatadb"],
+            "problemMatcher":"$go",
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "none"
+        }
+    ]
+}

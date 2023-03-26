@@ -10,7 +10,7 @@ var ErrConstituentNotFound = errors.New("constituent not found")
 type Constituent int32
 
 const (
-	// order and numbering same as NOAA is used
+	// order and numbering same as NOAA uses
 	C_M2   Constituent = 1
 	C_S2   Constituent = 2
 	C_N2   Constituent = 3
@@ -156,7 +156,7 @@ func (c Constituent) String() string {
 func FromString(constituent string) (Constituent, error) {
 	constituentUpperCase := strings.ToUpper(constituent)
 	switch constituentUpperCase {
-	// noaa number
+	// NOAA
 	case "M2":
 		return C_M2, nil
 	case "S2":

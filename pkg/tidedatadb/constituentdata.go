@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"math"
 
 	"github.com/mzeiher/perth3-go/pkg/constituents"
 	"github.com/mzeiher/perth3-go/pkg/utils"
@@ -158,6 +159,22 @@ func (c *ConstituentData) GetDataXY(x uint32, y uint32) ([]float32, error) {
 	return data, nil
 }
 
-func (c *ConstituentData) GetDataInterpolatedLatLon(lat float32, lon float32) ([]float32, error) {
-	return utils.InterpolateValues(lat, lon, c.Header.MinLat, c.Header.MaxLat, c.Header.MinLon, c.Header.MaxLon, c.Header.GridXSize, c.Header.GridYSize, c, true)
+func (c *ConstituentData) GetDataInterpolatedLatLon(lat float32, lon float32) (*constituents.ConstituentDatum, error) {
+	rawData, err := utils.InterpolateValues(lat, lon, c.Header.MinLat, c.Header.MaxLat, c.Header.MinLon, c.Header.MaxLon, c.Header.GridXSize, c.Header.GridYSize, c, true)
+	if err != nil {
+		return nil, err
+	}
+	if c.ConstituentInfo.AmplitudeUnit == UNIT_CM {
+		rawData[0] = rawData[0] / 100
+	} else if c.ConstituentInfo.AmplitudeUnit == UNIT_FEET {
+		rawData[0] = rawData[0] * 0.3048
+	}
+	if c.ConstituentInfo.PhaseUnit == UNIT_RADIAN {
+		rawData[1] = rawData[1] * (180 / math.Pi)
+	}
+	return &constituents.ConstituentDatum{
+		Constituent: c.ConstituentInfo.Constituent,
+		Amplitude:   float64(rawData[0]),
+		Phase:       float64(rawData[1]),
+	}, nil
 }
