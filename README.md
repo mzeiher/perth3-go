@@ -76,7 +76,4 @@ The explanation for computation of the node corrections and arguments will follo
 
 # References
 * [1] https://www.space.dtu.dk/english/research/scientific_data_and_models/global_ocean_tide_model
-<<<<<<< HEAD
 * [2] https://tidesandcurrents.noaa.gov/publications/SpecialPubNo98.pdf
-=======
->>>>>>> f24b96e73f6845b8e6a6d2897bbb17e5f5ba9af3
