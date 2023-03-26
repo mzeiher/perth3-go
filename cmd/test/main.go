@@ -10,8 +10,8 @@ import (
 
 func main() {
 
-	// t := time.Date(2023, time.March, 20, 16, 0, 0, 0, time.UTC)
-	localTime := time.Now()
+	localTime := time.Date(2023, time.March, 20, 16, 0, 0, 0, time.UTC)
+	// localTime := time.Now()
 	localLocation, err := time.LoadLocation("Local")
 	if err != nil {
 		panic(err)
@@ -44,8 +44,8 @@ func main() {
 	// var lon float64 = -8.661505
 
 	// // sagres, PT
-	// var lat float64 = 37.010503
-	// var lon float64 = -8.962977
+	var lat float64 = 37.010503
+	var lon float64 = -8.962977
 
 	// st helier, channel islands
 	// var lat float64 = 49.182736
@@ -60,8 +60,8 @@ func main() {
 	// var lon float64 = 7.850038
 
 	// den helder, nl
-	var lat float64 = 52.967
-	var lon float64 = 4.75
+	// var lat float64 = 52.967
+	// var lon float64 = 4.75
 
 	mssLoader, err := loader.CreateNewAsciiMSSLoader("./.data/meanseasurface/DTU15MSS_2min.mss")
 	if err != nil {
@@ -74,11 +74,12 @@ func main() {
 	mssHeight := data.InterpolateDataForPoint(lat, lon)
 	fmt.Printf("mssHeight: %f\n", mssHeight)
 
-	tideLat, tideHat, err := tide.GetLatAndHatAtLocation("./.data/tide/constituents.dat", lat, lon)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("LAT: %10.4f, HAT: %10.4f\n", tideLat, tideHat)
+	// tideLat, tideHat, err := tide.GetLatAndHatAtLocation("./.data/tide/constituents.dat", lat, lon)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Printf("LAT: %10.4f, HAT: %10.4f\n", tideLat, tideHat)
+	tideLat := 0.0
 
 	// Get TideHeight
 	tideHeight, err := tide.GetTideHeightAtLocationAtTime("./.data/tide/constituents.dat", t, lat, lon)

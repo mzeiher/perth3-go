@@ -110,98 +110,98 @@ func (a *asciiTideFile) GetNextTideGrid() (*constituents.TideConstituentData, er
 }
 
 func (a *asciiTideFile) ParseHeader() (asciiTideHeader, error) {
-	asciHeader := asciiTideHeader{}
+	asciiHeader := asciiTideHeader{}
 
 	// try to read the title
 	title, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	constituentFound := false
 	for _, currentConstituent := range constituents.TideConstituents {
 		if strings.HasPrefix(title, string(currentConstituent)) {
 			constituentFound = true
-			asciHeader.constituent = currentConstituent
+			asciiHeader.constituent = currentConstituent
 			break
 		}
 	}
 	if !constituentFound {
-		return asciHeader, fmt.Errorf("unknown constituent in title %s", title)
+		return asciiHeader, fmt.Errorf("unknown constituent in title %s", title)
 	}
 
 	if strings.Contains(strings.ToLower(title), "amplitude") {
-		asciHeader.constituentType = constituents.AMPLITUDE
+		asciiHeader.constituentType = constituents.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(title), "phase") {
-		asciHeader.constituentType = constituents.PHASE
+		asciiHeader.constituentType = constituents.PHASE
 	}
 
 	// try to get type in second line
 	description, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 	if strings.Contains(strings.ToLower(description), "amplitude") {
-		asciHeader.constituentType = constituents.AMPLITUDE
+		asciiHeader.constituentType = constituents.AMPLITUDE
 	} else if strings.Contains(strings.ToLower(description), "phase") {
-		asciHeader.constituentType = constituents.PHASE
+		asciiHeader.constituentType = constituents.PHASE
 	}
-	if asciHeader.constituentType == "" {
-		return asciHeader, fmt.Errorf("constituent type not found")
+	if asciiHeader.constituentType == "" {
+		return asciiHeader, fmt.Errorf("constituent type not found")
 	}
 
 	// read grid size (x,y)
 	gridSize, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	_, err = fmt.Sscanf(gridSize, "%d %d", &asciHeader.gridY, &asciHeader.gridX)
+	_, err = fmt.Sscanf(gridSize, "%d %d", &asciiHeader.gridY, &asciiHeader.gridX)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read latitude min/max
 	latMinMax, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	_, err = fmt.Sscanf(latMinMax, "%f %f", &asciHeader.latitudeMin, &asciHeader.latitudeMax)
+	_, err = fmt.Sscanf(latMinMax, "%f %f", &asciiHeader.latitudeMin, &asciiHeader.latitudeMax)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read latitude min/max
 	lonMinMax, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	_, err = fmt.Sscanf(lonMinMax, "%f %f", &asciHeader.longitudeMin, &asciHeader.longitudeMax)
+	_, err = fmt.Sscanf(lonMinMax, "%f %f", &asciiHeader.longitudeMin, &asciiHeader.longitudeMax)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read UNDEF value
 	undefValue, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
-	_, err = fmt.Sscanf(undefValue, "%f", &asciHeader.undefValue)
+	_, err = fmt.Sscanf(undefValue, "%f", &asciiHeader.undefValue)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
 	// read and forget fortran format
 	entriesPerLine, err := a.reader.ReadString('\n')
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
-	_, err = fmt.Sscanf(entriesPerLine, "(%d", &asciHeader.entriesPerLine)
+	_, err = fmt.Sscanf(entriesPerLine, "(%d", &asciiHeader.entriesPerLine)
 	if err != nil {
-		return asciHeader, err
+		return asciiHeader, err
 	}
 
-	return asciHeader, nil
+	return asciiHeader, nil
 }

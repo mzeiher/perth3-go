@@ -29,7 +29,7 @@ $$hcos_{c}(lat,lon) = A_{c}(lat,lon)*cos(\omega_{c}(lat,lon)*\frac{\pi}{180})$$
 
 $$hsin_{c}(lat,lon) = A_{c}(lat,lon)*sin(\omega_{c}(lat,lon)*\frac{\pi}{180})$$
 
-this leads to the following equation:
+this leads to the following equation (also known as trigonometric identity):
 
 $$height_c(lat,lon, t) = hcos_c(lat,lon)*cos(t)+hsin_c(lat,lon)*sin(t)$$
 
@@ -44,14 +44,19 @@ With all of these equations and information we now can formulate the equation to
 $$h(lat,lon, t) = \sum_{c=P1,O1,...}{hcos_c(lat,lon)*F(t)*cos(ARG_c(t)+U_c(t)*\frac{\pi}{180})+
 hsin_c(lat,lon)*F(t)*sin(ARG_c(t)+U_c(t)*\frac{\pi}{180})}$$ 
 
-Ok, now to get the tide height for display, for this we need to know some oceanographic datums, in our case the **LAT** the lat is the lowest astronomical tide, meaning the lowest a tide can get only depending on the tide equation, don't taking local phenomenon like storm surges, wind, etc into account (HAT is the highest astronomical tide). Maps for navigation typically denote all depths relative to the LAT, meaning if the tide is at its lowest possible and the map is blue at your position you still have water under the keel :D. To calculate the $LAT(lat,lon)$ you need to find the lowest value of $h(lat,lon)$ over a time interval of ~19 years. Why 19years?, this has to do with the movement of celestial bodies, the chances are high, that within this 19years the bodies are aligned to create the HAT and LAT.
+Ok, now to get the tide height for display, for this we need to know some oceanographic datums, in our case the **LAT** the lat is the lowest astronomical tide, meaning the lowest a tide can get only depending on the tide equation, don't taking local phenomenon like storm surges, wind, etc into account (**HAT** is the highest astronomical tide). Maps for navigation typically denote all depths relative to the LAT, meaning if the tide is at its lowest possible and the map is blue at your position you still have water under the keel :D. To calculate the $LAT(lat,lon)$ you need to find the lowest value of $h(lat,lon)$ over a time interval of ~19 years. Why 19years?, this has to do with the movement of celestial bodies, the chances are high, that within this 19years the bodies are aligned to create the HAT and LAT. Further more we need to calculate the mean water level above the datum over all entries in these 19years
 
-$$LAT(lat,lon) = min_{t=0}^{t<19y}{(h(lat,lon, t))}$$
+$$LAT(lat,lon) = min_{t=0}^{t<19y}{(h_t(lat,lon, t))}$$
 
-All tide heights are also displayed relative to the LAT, so the final equation to get the final tide height relative to lat $h_{lat}$ is
-$$h_{lat}(lan,lon,t) = h(lat,lon,t)-LAT(lat,lon)$$
+and 
+
+$$H_0(lat,lon) = \frac{h_1(lat,lon) + h_2(lat,lon) + h_3(lat,lon) + ... h_n(lat,lon)}{n}$$
+
+All tide heights are also displayed relative to the LAT, so the final equation to get the final tide height relative to the mean water level $h_{mean}$ is
+$$h_{mean}(lan,lon,t) = H_0(lat,lon)+h(lat,lon,t)$$
 
 The explanation for computation of the node corrections and arguments will follow :)
 
 # References
 * [1] https://www.space.dtu.dk/english/research/scientific_data_and_models/global_ocean_tide_model
+* [2] https://tidesandcurrents.noaa.gov/publications/SpecialPubNo98.pdf
