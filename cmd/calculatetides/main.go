@@ -51,7 +51,7 @@ func main() {
 	}
 
 	// load constituent db for lookup
-	constituentDb, err := tidedatadb.OpenTideDataDb(constituentDbPath, tidedatadb.TYPE_CONSTITUENT, os.O_RDONLY)
+	constituentDb, err := tidedatadb.OpenTideDataDb(constituentDbPath)
 	if err != nil {
 		printHelpAndExit(err)
 	}

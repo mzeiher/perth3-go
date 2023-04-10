@@ -1,10 +1,10 @@
 package utils
 
 type Interpolatable interface {
-	GetDataXY(x uint32, y uint32) ([]float32, error)
+	GetDataXY(x uint64, y uint64) ([]float32, error)
 }
 
-func InterpolateValues(lat float32, lon float32, minLat float32, maxLat float32, minLon float32, maxLon float32, gridSizeX uint32, gridSizeY uint32, dataGrid Interpolatable, wrap bool) ([]float32, error) {
+func InterpolateValues(lat float32, lon float32, minLat float32, maxLat float32, minLon float32, maxLon float32, gridSizeX uint64, gridSizeY uint64, dataGrid Interpolatable, wrap bool) ([]float32, error) {
 
 	xResInDegree := (maxLon - minLon) / float32(gridSizeX-1)
 	yResInDegree := (maxLat - minLat) / float32(gridSizeY-1)
@@ -12,8 +12,8 @@ func InterpolateValues(lat float32, lon float32, minLat float32, maxLat float32,
 	x0PosForLon := MapValue(lon, minLon, maxLon, 0, float32(gridSizeX-1))
 	y0PosForLat := MapValue(lat, minLat, maxLat, 0, float32(gridSizeY-1))
 
-	x0PosForLonInt := uint32(x0PosForLon)
-	y0PosForLatInt := uint32(y0PosForLat)
+	x0PosForLonInt := uint64(x0PosForLon)
+	y0PosForLatInt := uint64(y0PosForLat)
 
 	x1PosForLonInt := x0PosForLonInt + 1
 	y1PosForLatInt := y0PosForLatInt + 1

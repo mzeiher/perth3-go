@@ -5,7 +5,7 @@
             "label": "rm-tidedatadb",
             "command": "rm",
             "type": "shell",
-            "args": ["-f", "./.data/constituents.tidedatadb"],
+            "args": ["-f", "./.data/dtu16.nc"],
             "problemMatcher":"$go",
             "presentation": {
                 "reveal": "always"

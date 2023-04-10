@@ -1,11 +1,10 @@
 package tidedatadb
 
 import (
-	"encoding/binary"
 	"errors"
-	"io"
 	"math"
 
+	"github.com/fhs/go-netcdf/netcdf"
 	"github.com/mzeiher/perth3-go/pkg/constituents"
 	"github.com/mzeiher/perth3-go/pkg/utils"
 )
@@ -13,6 +12,7 @@ import (
 var (
 	ErrConstituentNotFound    = errors.New("constituent not found")
 	ErrConstituentAlreadyInDb = errors.New("constituent already in DB")
+	ErrUnitNotFound           = errors.New("unit not found")
 )
 
 type ConstituentAmplitudeUnit byte
@@ -23,12 +23,59 @@ const (
 	UNIT_FEET
 )
 
+func ConstituentAmplitudeUnitFromString(name string) (ConstituentAmplitudeUnit, error) {
+	switch name {
+	case "CM":
+		return UNIT_CM, nil
+	case "M":
+		return UNIT_METER, nil
+	case "FT":
+		return UNIT_FEET, nil
+	}
+	return 0, ErrUnitNotFound
+}
+
+func (c ConstituentAmplitudeUnit) String() string {
+	switch c {
+	case UNIT_CM:
+		return "CM"
+	case UNIT_METER:
+		return "M"
+	case UNIT_FEET:
+		return "FT"
+	}
+	return ""
+}
+
 type ConstituentPhaseUnit byte
 
 const (
 	UNIT_DEGREE ConstituentPhaseUnit = iota
 	UNIT_RADIAN
 )
+
+func ConstituentPhaseUnitFromString(name string) (ConstituentPhaseUnit, error) {
+	switch name {
+	case "DEGREE":
+		return UNIT_DEGREE, nil
+	case "RADIAN":
+		return UNIT_RADIAN, nil
+	}
+	return 0, ErrUnitNotFound
+}
+
+func (c ConstituentPhaseUnit) String() string {
+	switch c {
+	case UNIT_DEGREE:
+		return "DEGREE"
+	case UNIT_RADIAN:
+		return "RADIAN"
+	}
+	return ""
+}
+
+const ATTR_UNIT_AMPLITUDE = "UNIT_AMP"
+const ATTR_UNIT_PHASE = "UNIT_PHASE"
 
 type ConstituentInfo struct {
 	Constituent   constituents.Constituent
@@ -37,135 +84,203 @@ type ConstituentInfo struct {
 }
 
 func (t *TideDataDB) GetConstituentData(constituent constituents.Constituent) (*ConstituentData, error) {
-	if t.Type != TYPE_CONSTITUENT {
-		return nil, ErrInvalidDataType
-	}
-	t.file.Seek(int64(PREAMBLE_SIZE), 0)
-	offset := PREAMBLE_SIZE
-	for {
-		t.file.Seek(int64(offset), 0)
-		var currentEntry DataEntry
-		err := binary.Read(t.file, binary.BigEndian, &currentEntry)
-		if errors.Is(err, io.EOF) {
-			return nil, ErrConstituentNotFound
-		} else if err != nil {
-			return nil, err
-		} else {
-			var currentConstituentInfo ConstituentInfo
-			err := binary.Read(t.file, binary.BigEndian, &currentConstituentInfo)
-			if err != nil {
-				return nil, err
-			}
-			if currentConstituentInfo.Constituent == constituent {
-				return &ConstituentData{
-					db:              t,
-					Offset:          uint32(offset),
-					ConstituentInfo: currentConstituentInfo,
-					Header:          currentEntry,
-				}, nil
-			} else {
-				// advance offset
-				offset = offset + int(currentEntry.Length)
-			}
-		}
+	variable, err := t.file.Var(constituent.String())
+	if err != nil {
+		return nil, err
 	}
 
+	attrAmpUnit, err := utils.NetcdfGetStringFromAttribute(ATTR_UNIT_AMPLITUDE, &variable)
+	if err != nil {
+		return nil, err
+	}
+	attrPhaseUnit, err := utils.NetcdfGetStringFromAttribute(ATTR_UNIT_PHASE, &variable)
+	if err != nil {
+		return nil, err
+	}
+
+	ampUnit, err := ConstituentAmplitudeUnitFromString(attrAmpUnit)
+	if err != nil {
+		return nil, err
+	}
+	phaseUnit, err := ConstituentPhaseUnitFromString(attrPhaseUnit)
+	if err != nil {
+		return nil, err
+	}
+
+	dimensionsLat, err := t.file.Dim("lat")
+	if err != nil {
+		return nil, err
+	}
+	dimensionLatLen, err := dimensionsLat.Len()
+	if err != nil {
+		return nil, err
+	}
+
+	dimensionsLon, err := t.file.Dim("lon")
+	if err != nil {
+		return nil, err
+	}
+	dimensionLonLen, err := dimensionsLon.Len()
+	if err != nil {
+		return nil, err
+	}
+
+	latVar, err := t.file.Var("lat")
+	if err != nil {
+		return nil, err
+	}
+
+	lonVar, err := t.file.Var("lon")
+	if err != nil {
+		return nil, err
+	}
+
+	minLat, err := latVar.ReadFloat64At([]uint64{0})
+	if err != nil {
+		return nil, err
+	}
+	maxLat, err := latVar.ReadFloat64At([]uint64{dimensionLatLen - 1})
+	if err != nil {
+		return nil, err
+	}
+	minLon, err := lonVar.ReadFloat64At([]uint64{0})
+	if err != nil {
+		return nil, err
+	}
+	maxLon, err := lonVar.ReadFloat64At([]uint64{dimensionLonLen - 1})
+	if err != nil {
+		return nil, err
+	}
+
+	return &ConstituentData{
+		variable: &variable,
+		Dimensions: Dimensions{
+			MinLat:        float32(minLat),
+			MaxLat:        float32(maxLat),
+			MinLon:        float32(minLon),
+			MaxLon:        float32(maxLon),
+			GridXSize:     dimensionLonLen,
+			GridYSize:     dimensionLatLen,
+			ResolutionLat: (float32(maxLat) - float32(minLat)) / float32(dimensionLatLen-1),
+			ResolutionLon: (float32(maxLon) - float32(minLon)) / float32(dimensionLonLen-1),
+		},
+		ConstituentInfo: ConstituentInfo{
+			Constituent:   constituent,
+			AmplitudeUnit: ampUnit,
+			PhaseUnit:     phaseUnit,
+		},
+	}, nil
 }
 
-func (t *TideDataDB) CreateNewConstituentData(entryToCreate DataEntry, constituentInfoToCreate ConstituentInfo) (*ConstituentData, error) {
-	if t.Type != TYPE_CONSTITUENT {
-		return nil, ErrInvalidDataType
-	}
-	offset := PREAMBLE_SIZE
-	for {
-		t.file.Seek(int64(offset), 0)
-		var currentEntry DataEntry
-		err := binary.Read(t.file, binary.BigEndian, &currentEntry)
-		if errors.Is(err, io.EOF) {
-			// eof reached, create new entry to add data
-			t.file.Seek(int64(offset), 0)
-			// header + constituent info + data (2x4 byte per entry)
-			length := 40 + 6 + ((entryToCreate.GridXSize * 8) * entryToCreate.GridYSize)
-			entryToCreate.Length = length
+func (t *TideDataDB) CreateNewConstituentData(dimensionsToCreate Dimensions, constituentInfoToCreate ConstituentInfo) (*ConstituentData, error) {
+	// create dimensions if not exist
+	var dimLat netcdf.Dim
+	var dimLon netcdf.Dim
+	var dimData netcdf.Dim
+	var err error
 
-			binary.Write(t.file, binary.BigEndian, entryToCreate)
-			binary.Write(t.file, binary.BigEndian, constituentInfoToCreate)
-
-			return &ConstituentData{
-				db:              t,
-				Offset:          uint32(offset),
-				ConstituentInfo: constituentInfoToCreate,
-				Header:          entryToCreate,
-			}, nil
-		} else if err != nil {
+	if dimLat, err = t.file.Dim("lat"); err != nil {
+		dimLat, err = t.file.AddDim("lat", dimensionsToCreate.GridYSize)
+		if err != nil {
 			return nil, err
-		} else {
-			// check currentConstituent
-			var currentConstituent ConstituentInfo
-			err := binary.Read(t.file, binary.BigEndian, &currentConstituent)
-			if err != nil {
-				return nil, err
-			} else if currentConstituent.Constituent == constituentInfoToCreate.Constituent {
-				// constituent already in file
-				return nil, ErrConstituentAlreadyInDb
-			} else {
-				// advance offset
-				offset = offset + int(currentEntry.Length)
-			}
-
+		}
+	}
+	if dimLon, err = t.file.Dim("lon"); err != nil {
+		dimLon, err = t.file.AddDim("lon", dimensionsToCreate.GridXSize)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if dimData, err = t.file.Dim("data"); err != nil {
+		dimData, err = t.file.AddDim("data", 2)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// create dimension data if not exist
+	if _, err := t.file.Var("lat"); err != nil {
+		dimLatVar, err := t.file.AddVar("lat", netcdf.DOUBLE, []netcdf.Dim{dimLat})
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < int(dimensionsToCreate.GridYSize); i++ {
+			dimLatVar.WriteFloat64At([]uint64{uint64(i)}, float64(dimensionsToCreate.MinLat)+(float64(i)*float64(dimensionsToCreate.ResolutionLat)))
+		}
+	}
+	if _, err := t.file.Var("lon"); err != nil {
+		dimLonVar, err := t.file.AddVar("lon", netcdf.DOUBLE, []netcdf.Dim{dimLon})
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < int(dimensionsToCreate.GridXSize); i++ {
+			dimLonVar.WriteFloat64At([]uint64{uint64(i)}, float64(dimensionsToCreate.MinLon)+(float64(i)*float64(dimensionsToCreate.ResolutionLon)))
 		}
 	}
 
+	constituentVariable, err := t.file.AddVar(constituentInfoToCreate.Constituent.String(), netcdf.FLOAT, []netcdf.Dim{dimLat, dimLon, dimData})
+	if err != nil {
+		return nil, err
+	}
+
+	attrUnitAmplitude := constituentVariable.Attr(ATTR_UNIT_AMPLITUDE)
+	err = attrUnitAmplitude.WriteBytes([]byte(constituentInfoToCreate.AmplitudeUnit.String()))
+	if err != nil {
+		return nil, err
+	}
+
+	attrUnitPhase := constituentVariable.Attr(ATTR_UNIT_PHASE)
+	if err != nil {
+		return nil, err
+	}
+	err = attrUnitPhase.WriteBytes([]byte(constituentInfoToCreate.PhaseUnit.String()))
+	if err != nil {
+		return nil, err
+	}
+
+	return &ConstituentData{
+		variable:        &constituentVariable,
+		Dimensions:      dimensionsToCreate,
+		ConstituentInfo: constituentInfoToCreate,
+	}, nil
 }
 
 type ConstituentData struct {
-	db              *TideDataDB
-	Offset          uint32
+	variable        *netcdf.Var
+	Dimensions      Dimensions
 	ConstituentInfo ConstituentInfo
-	Header          DataEntry
 }
 
-func (c *ConstituentData) WriteDataXY(amplitudePhase []float32, x uint32, y uint32) error {
-	if y >= c.Header.GridYSize {
-		return errors.New("invalid index")
+func (c *ConstituentData) WriteDataXY(amplitudePhase []float32, x uint64, y uint64) error {
+	err := c.variable.WriteFloat32At([]uint64{y, x, 0}, amplitudePhase[0])
+	if err != nil {
+		return err
 	}
-	if x >= c.Header.GridXSize {
-		return errors.New("invalid index")
+	err = c.variable.WriteFloat32At([]uint64{y, x, 1}, amplitudePhase[1])
+	if err != nil {
+		return err
 	}
-	if len(amplitudePhase) != 2 {
-		return errors.New("invalid amplitude phase length")
-	}
-	offset := c.Offset + 40 + 6 + (y*c.Header.GridXSize*8 + x*8)
-	c.db.file.Seek(int64(offset), 0)
-	binary.Write(c.db.file, binary.BigEndian, amplitudePhase)
-
 	return nil
 }
 
-func (c *ConstituentData) GetDataXY(x uint32, y uint32) ([]float32, error) {
-	if y >= c.Header.GridYSize {
-		return nil, errors.New("invalid index")
+func (c *ConstituentData) GetDataXY(x uint64, y uint64) ([]float32, error) {
+	amp, err := c.variable.ReadFloat32At([]uint64{y, x, 0})
+	if err != nil {
+		return nil, err
 	}
-	if x >= c.Header.GridXSize {
-		return nil, errors.New("invalid index")
+	phase, err := c.variable.ReadFloat32At([]uint64{y, x, 1})
+	if err != nil {
+		return nil, err
 	}
-
-	offset := c.Offset + 40 + 6 + (y*c.Header.GridXSize*8 + x*8)
-	c.db.file.Seek(int64(offset), 0)
-
-	data := make([]float32, 2)
-	binary.Read(c.db.file, binary.BigEndian, data)
-
-	return data, nil
+	return []float32{amp, phase}, nil
 }
 
 func (c *ConstituentData) GetDataInterpolatedLatLon(lat float32, lon float32) (*constituents.ConstituentDatum, error) {
-	rawData, err := utils.InterpolateValues(lat, lon, c.Header.MinLat, c.Header.MaxLat, c.Header.MinLon, c.Header.MaxLon, c.Header.GridXSize, c.Header.GridYSize, c, true)
+	rawData, err := utils.InterpolateValues(lat, lon, c.Dimensions.MinLat, c.Dimensions.MaxLat, c.Dimensions.MinLon, c.Dimensions.MaxLon, c.Dimensions.GridXSize, c.Dimensions.GridYSize, c, true)
 	if err != nil {
 		return nil, err
 	}
 	if c.ConstituentInfo.AmplitudeUnit == UNIT_METER {
-		rawData[0] = rawData[0] * 100
+		rawData[0] = rawData[0] / 100
 	} else if c.ConstituentInfo.AmplitudeUnit == UNIT_FEET {
 		rawData[0] = rawData[0] * 30.48
 	}

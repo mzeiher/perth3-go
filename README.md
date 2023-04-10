@@ -5,24 +5,24 @@ The tool currently works with DTU-16 files from the danish technical university.
 # Getting Started
 To calculate the current tide for a specific point and time you first need to download and extract the DTU-16 constituent file from the DTU ftp: `ftp://ftp.space.dtu.dk/pub/DTU16/OCEAN_TIDE/PERTH3/fort.30.gz`
 
-either use the precompiled tool `createconstituentdb` or use the substitue the command with `go run ./cmd/createconstituentdb/main.go` to create constituent database with precalculated data for each constituent
+either use the precompiled tool `createconstituentdb` or substitute the command with `go run ./cmd/createconstituentdb/main.go` to create constituent database with precalculated data for each constituent
 ```bash
-createconstituentdb ./fort.30 ./dtu16.constituentdb
+createconstituentdb ./fort.30 ./dtu16.nc
 ```
 
 after creating the tide database you can use the tool `calculatetides` or `go run ./cmd/calculatetides/main.go`
 
 ```bash
-calculatetides -constituentdb ./dtu16.constituentdb -tstart "1985-01-01T00:00:00.000Z" -tend "1985-01-01T01:00:00.000Z" "37.010503,-8.962977"
+calculatetides -constituentdb ./dtu16.nc -tstart "1985-01-01T00:00:00.000Z" -tend "1985-01-01T01:00:00.000Z" "37.010503,-8.962977"
 ```
 this will calculate the height of the tide at a specific point and time, the time must be in RFC3339 format
 
-Currently LAT and MSS for the point is not yet calculated to get a relative tide height at the point, but will follow.
+Currently LAT and MSS for the point is not yet calculated to get a correct relative tide height above the LAT datum at the point, but will follow.
 
 
 If you want to run the original tool, you can copy the fort.30 file into the same folder as the gettide1.f file and build the tool with the Makefile in the folder (gfortran must be installed)
 
-# Brief introduction to tide calculation
+# Brief introduction to tide calculation (perth-3 solver)
 Tides..., how do they work and how can this tool "predict" the tides at a specific location and time. The explanation you got in school about the moon attracting a body of water is just one very small part of the whole truth.
 
 ![Moon Model](./doc/tides_moon.png)

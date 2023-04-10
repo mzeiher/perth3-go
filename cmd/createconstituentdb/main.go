@@ -54,7 +54,7 @@ func main() {
 		printHelpAndExit(err)
 	}
 	defer constituentReader.Close()
-	tideDbWriter, err := tidedatadb.OpenTideDataDb(outFile, tidedatadb.TYPE_CONSTITUENT, os.O_RDWR|os.O_CREATE)
+	tideDbWriter, err := tidedatadb.OpenTideDataDb(outFile)
 	if err != nil {
 		printHelpAndExit(err)
 	}
@@ -86,17 +86,15 @@ func main() {
 			printHelpAndExit(fmt.Errorf("dimensions of amplitude and phase data are not compatible"))
 		}
 
-		constituentEntry, err := tideDbWriter.CreateNewConstituentData(tidedatadb.DataEntry{
-			Length:        0,
+		constituentEntry, err := tideDbWriter.CreateNewConstituentData(tidedatadb.Dimensions{
 			MinLat:        tideDataAmp.LatitudeMin,
 			MaxLat:        tideDataAmp.LatitudeMax,
 			MinLon:        tideDataAmp.LongitudeMin,
 			MaxLon:        tideDataAmp.LongitudeMax,
 			ResolutionLat: (tideDataAmp.LatitudeMax - tideDataAmp.LatitudeMin) / float32(tideDataAmp.SizeY-1),
 			ResolutionLon: (tideDataAmp.LongitudeMax - tideDataAmp.LongitudeMin) / float32(tideDataAmp.SizeX-1),
-			GridXSize:     uint32(tideDataAmp.SizeX),
-			GridYSize:     uint32(tideDataAmp.SizeY),
-			UndefValue:    tideDataAmp.UndefValue,
+			GridXSize:     uint64(tideDataAmp.SizeX),
+			GridYSize:     uint64(tideDataAmp.SizeY),
 		}, tidedatadb.ConstituentInfo{
 			Constituent:   tideDataAmp.Constituent,
 			AmplitudeUnit: tidedatadb.UNIT_CM,
@@ -106,18 +104,16 @@ func main() {
 			printHelpAndExit(err)
 		}
 
-		fmt.Printf("Write constituent %s (length: %d) on offset 0x%x\n", constituentEntry.ConstituentInfo.Constituent, constituentEntry.Header.Length, constituentEntry.Offset)
+		fmt.Printf("Write constituent %s\n", constituentEntry.ConstituentInfo.Constituent)
 
 		for y := 0; y < tideDataAmp.SizeY; y++ {
 			for x := 0; x < tideDataAmp.SizeX; x++ {
-				err = constituentEntry.WriteDataXY([]float32{tideDataAmp.Data[y][x], tideDataPhase.Data[y][x]}, uint32(x), uint32(y))
+				err = constituentEntry.WriteDataXY([]float32{tideDataAmp.Data[y][x], tideDataPhase.Data[y][x]}, uint64(x), uint64(y))
 				if err != nil {
 					printHelpAndExit(err)
 				}
 			}
 		}
-		// return
-		//fmt.Printf("%v", constituentEntry)
 	}
 
 }
