@@ -54,7 +54,7 @@ func main() {
 		printHelpAndExit(err)
 	}
 	defer constituentReader.Close()
-	tideDbWriter, err := tidedatadb.OpenTideDataDb(outFile)
+	tideDbWriter, err := tidedatadb.OpenTideDataDb(outFile, 0)
 	if err != nil {
 		printHelpAndExit(err)
 	}

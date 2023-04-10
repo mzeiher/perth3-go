@@ -12,6 +12,12 @@ import (
 	"github.com/fhs/go-netcdf/netcdf"
 )
 
+type FileMode netcdf.FileMode
+
+const (
+	MODE_READONLY FileMode = FileMode(netcdf.NOWRITE)
+)
+
 type Dimensions struct {
 	MinLat        float32
 	MaxLat        float32
@@ -33,19 +39,19 @@ func (t *TideDataDB) Close() error {
 
 // open or creates a new tide data db
 // IMPORTANT! currently not threadsafe!
-func OpenTideDataDb(filePath string) (*TideDataDB, error) {
+func OpenTideDataDb(filePath string, mode FileMode) (*TideDataDB, error) {
 	_, err := os.Stat(filePath)
 	var file netcdf.Dataset
 	// if file does not exist, create a new file
 	if err != nil && errors.Is(err, fs.ErrNotExist) {
-		file, err = netcdf.CreateFile(filePath, netcdf.NETCDF4)
+		file, err = netcdf.CreateFile(filePath, netcdf.NETCDF4|netcdf.FileMode(mode))
 		if err != nil {
 			return nil, err
 		}
 	} else if err != nil {
 		return nil, err
 	} else {
-		file, err = netcdf.OpenFile(filePath, netcdf.NETCDF4)
+		file, err = netcdf.OpenFile(filePath, netcdf.NETCDF4|netcdf.FileMode(mode))
 		if err != nil {
 			return nil, err
 		}
