@@ -80,12 +80,17 @@ func main() {
 		printHelpAndExit(errors.New("start time must be before end time"))
 	}
 
-	solverFunc, err := solver.GetSolver(solverString)
+	solverType, err := solver.GetSolverFromString(solverString)
 	if err != nil {
 		printHelpAndExit(err)
 	}
 
-	tideDatums, err := tidedatums.GetDatumsForLatLan(constituentDb, solverString, lat, lon)
+	solverFunc, err := solver.GetSolver(solverType)
+	if err != nil {
+		printHelpAndExit(err)
+	}
+
+	tideDatums, err := tidedatums.GetDatumsForLatLan(constituentDb, solverType, lat, lon)
 	if err != nil {
 		panic(err)
 	}

@@ -10,15 +10,38 @@ import (
 
 var ErrNoSolverFound = errors.New("no solver found for input")
 
-var availableSolver map[string]Solver = make(map[string]Solver)
+var availableSolver map[Solver]CreateSolverFunc = make(map[Solver]CreateSolverFunc)
 
-func init() {
-	availableSolver["perth3"] = perth3.Solve
+type Solver string
+
+const (
+	PERTH_3 Solver = "perth3"
+	unknown Solver = "unknown"
+)
+
+func (s Solver) String() string {
+	switch s {
+	case PERTH_3:
+		return "perth3"
+	}
+	return "unknown"
 }
 
-type Solver func(constituentDb *tidedatadb.TideDataDB, lat float32, lon float32, timeUtc time.Time) (float64, error)
+func GetSolverFromString(solver string) (Solver, error) {
+	switch solver {
+	case "perth3":
+		return PERTH_3, nil
+	}
+	return unknown, ErrNoSolverFound
+}
 
-func GetSolver(solver string) (Solver, error) {
+func init() {
+	availableSolver[PERTH_3] = perth3.Solve
+}
+
+type CreateSolverFunc func(constituentDb *tidedatadb.TideDataDB, lat float32, lon float32, timeUtc time.Time) (float64, error)
+
+func GetSolver(solver Solver) (CreateSolverFunc, error) {
 	if availableSolver[solver] == nil {
 		return nil, ErrNoSolverFound
 	}

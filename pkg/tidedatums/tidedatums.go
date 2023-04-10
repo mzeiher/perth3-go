@@ -20,7 +20,7 @@ type TideDatums struct {
 	LAT  float32
 }
 
-func GetDatumsForLatLan(constituentDb *tidedatadb.TideDataDB, solverName string, lat float32, lon float32) (*TideDatums, error) {
+func GetDatumsForLatLan(constituentDb *tidedatadb.TideDataDB, solverName solver.Solver, lat float32, lon float32) (*TideDatums, error) {
 
 	currentTime := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
